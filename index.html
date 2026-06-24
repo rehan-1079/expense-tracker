@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header">
+
+        <div class="logo">
+            <h1>Expense Tracker</h1>
+        </div>
+
+        <nav class="navbar" aria-label="Main Navigation">
+            <ul class="nav-links">
+                <li><a href="#">Home</a></li>
+                <li><a href="#">Dashboard</a></li>
+                <li><a href="#">Transactions</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+        </nav>
+
+        <button
+            class="menu-btn"
+            type="button"
+            aria-label="Open Navigation Menu">
+            ☰
+        </button>
+
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+
+        <!-- Dashboard Summary -->
+        <section
+            class="summary-section"
+            aria-labelledby="summary-heading">
+
+            <h2 id="summary-heading">Dashboard Summary</h2>
+
+            <div class="summary-cards">
+
+                <article class="card">
+                    <h3>Current Balance</h3>
+                    <p id="balance">PKR 0</p>
+                </article>
+
+                <article class="card">
+                    <h3>Total Income</h3>
+                    <p id="income" class="income">PKR 0</p>
+                </article>
+
+                <article class="card">
+                    <h3>Total Expense</h3>
+                    <p id="expense" class="expense">PKR 0</p>
+                </article>
+
+            </div>
+
+        </section>
+
+        <!-- Content Grid -->
+        <section class="content-grid">
+
+            <!-- Add Transaction Form -->
+            <section
+                class="form-section"
+                aria-labelledby="transaction-form-heading">
+
+                <h2 id="transaction-form-heading">
+                    Add Transaction
+                </h2>
+
+                <form id="transaction-form">
+
+                    <div class="form-group">
+                        <label for="transaction-name">
+                            Transaction Name
+                        </label>
+
+                        <input
+                            type="text"
+                            id="transaction-name"
+                            name="transaction-name"
+                            placeholder="Enter transaction name"
+                            autocomplete="off"
+                            required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="amount">
+                            Amount
+                        </label>
+
+                        <input
+                            type="number"
+                            id="amount"
+                            name="amount"
+                            placeholder="Enter amount"
+                            min="1"
+                            required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="type">
+                            Transaction Type
+                        </label>
+
+                        <select
+                            id="type"
+                            name="type"
+                            required>
+
+                            <option value="">
+                                Select Type
+                            </option>
+
+                            <option value="income">
+                                Income
+                            </option>
+
+                            <option value="expense">
+                                Expense
+                            </option>
+
+                        </select>
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="btn">
+
+                        Add Transaction
+
+                    </button>
+
+                </form>
+
+            </section>
+
+            <!-- Transaction History -->
+            <section
+                class="history-section"
+                aria-labelledby="history-heading">
+
+                <h2 id="history-heading">
+                    Transaction History
+                </h2>
+
+                <ul id="transaction-list">
+
+                    <li id="empty-state">
+                        No transactions found.
+                        Add your first transaction.
+                    </li>
+
+                </ul>
+
+            </section>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+
+        <p>Developed by Rehan Amjad</p>
+
+        <p>&copy; 2026 Expense Tracker. All Rights Reserved.</p>
+
+    </footer>
+
+    <script src="script.js"></script>
+
+</body>
+</html>
