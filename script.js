@@ -7,9 +7,9 @@ const CATEGORIES = {
   expense: ["Food", "Transport", "Shopping", "Bills", "Entertainment", "Health", "Education", "Other"]
 };
 
-let transactions = [];   
-let editId = null;       
-let deleteId = null;  
+let transactions = [];  
+let editId = null;      
+let deleteId = null;     
 
 const transactionForm = document.getElementById("transactionForm");
 const editIdInput = document.getElementById("editId");
@@ -78,6 +78,7 @@ async function fetchTransactions() {
     return [];
   }
 }
+
 async function createTransactionOnServer(data) {
   try {
     const response = await fetch(API_URL, {
@@ -507,7 +508,7 @@ function exportToCSV() {
 
 function startEdit(id) {
   const transaction = transactions.find(function (t) {
-    return t.id === id;
+    return t.id == id;
   });
   if (!transaction) return;
 
@@ -589,6 +590,7 @@ transactionForm.addEventListener("submit", async function (e) {
 });
 
 cancelEditBtn.addEventListener("click", cancelEdit);
+
 searchInput.addEventListener("input", renderTransactionList);
 filterType.addEventListener("change", renderTransactionList);
 filterCategory.addEventListener("change", renderTransactionList);
@@ -604,7 +606,7 @@ transactionList.addEventListener("click", function (e) {
 
   if (e.target.classList.contains("delete-btn")) {
     deleteId = id;
-    const transaction = transactions.find(function (t) { return t.id === id; });
+    const transaction = transactions.find(function (t) { return t.id == id; });
     deleteModalText.textContent = transaction
       ? 'Delete "' + transaction.name + '"? This cannot be undone.'
       : "This cannot be undone.";

@@ -1,9 +1,10 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const { readData, writeData } = require("./data");
+const transactionModel = require("./transactionModel");
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 app.use(cors());            
 app.use(express.json());    
@@ -56,96 +57,126 @@ function validateTransaction(body) {
   return errors;
 }
 
+function isValidId(id) {
+  return /^\d+$/.test(id);
+}
+
+function formatRow(row) {
+  if (!row) return row;
+  return {
+    ...row,
+    amount: Number(row.amount),
+    date: row.date instanceof Date ? row.date.toISOString().slice(0, 10) : row.date
+  };
+}
+
 app.get("/", (req, res) => {
   res.json({ message: "Expense Tracker API is running. Try GET /api/transactions" });
 });
 
-app.get("/api/transactions", (req, res) => {
-  const transactions = readData();
-  res.status(200).json(transactions);
+app.get("/api/transactions", async (req, res) => {
+  try {
+    const rows = await transactionModel.getAllTransactions();
+    res.status(200).json(rows.map(formatRow));
+  } catch (err) {
+    console.error("Error fetching transactions:", err);
+    res.status(500).json({ error: "Something went wrong while fetching transactions." });
+  }
 });
 
-app.get("/api/transactions/:id", (req, res) => {
-  const transactions = readData();
-  const transaction = transactions.find((t) => t.id === req.params.id);
-
-  if (!transaction) {
-    return res.status(404).json({ error: "Transaction not found." });
+app.get("/api/transactions/:id", async (req, res) => {
+  if (!isValidId(req.params.id)) {
+    return res.status(400).json({ error: "Invalid transaction id." });
   }
 
-  res.status(200).json(transaction);
+  try {
+    const row = await transactionModel.getTransactionById(req.params.id);
+    if (!row) {
+      return res.status(404).json({ error: "Transaction not found." });
+    }
+    res.status(200).json(formatRow(row));
+  } catch (err) {
+    console.error("Error fetching transaction:", err);
+    res.status(500).json({ error: "Something went wrong while fetching the transaction." });
+  }
 });
 
-
-app.post("/api/transactions", (req, res) => {
+app.post("/api/transactions", async (req, res) => {
   const errors = validateTransaction(req.body);
-
   if (errors.length > 0) {
-    return res.status(400).json({ errors: errors });
+    return res.status(400).json({ errors });
   }
 
-  const transactions = readData();
-
-  const newTransaction = {
-    id: Date.now().toString(),   
-    name: req.body.name.trim(),
-    amount: Number(req.body.amount),
-    category: req.body.category,
-    type: req.body.type,
-    date: req.body.date
-  };
-
-  transactions.push(newTransaction);
-  writeData(transactions);
-
-  res.status(201).json(newTransaction);
+  try {
+    const newRow = await transactionModel.createTransaction({
+      name: req.body.name.trim(),
+      amount: Number(req.body.amount),
+      type: req.body.type,
+      category: req.body.category,
+      date: req.body.date
+    });
+    res.status(201).json(formatRow(newRow));
+  } catch (err) {
+    console.error("Error creating transaction:", err);
+    res.status(500).json({ error: "Something went wrong while saving the transaction." });
+  }
 });
 
-app.put("/api/transactions/:id", (req, res) => {
+app.put("/api/transactions/:id", async (req, res) => {
+  if (!isValidId(req.params.id)) {
+    return res.status(400).json({ error: "Invalid transaction id." });
+  }
+
   const errors = validateTransaction(req.body);
-
   if (errors.length > 0) {
-    return res.status(400).json({ errors: errors });
+    return res.status(400).json({ errors });
   }
 
-  const transactions = readData();
-  const index = transactions.findIndex((t) => t.id === req.params.id);
+  try {
+    const updatedRow = await transactionModel.updateTransaction(req.params.id, {
+      name: req.body.name.trim(),
+      amount: Number(req.body.amount),
+      type: req.body.type,
+      category: req.body.category,
+      date: req.body.date
+    });
 
-  if (index === -1) {
-    return res.status(404).json({ error: "Transaction not found." });
+    if (!updatedRow) {
+      return res.status(404).json({ error: "Transaction not found." });
+    }
+
+    res.status(200).json(formatRow(updatedRow));
+  } catch (err) {
+    console.error("Error updating transaction:", err);
+    res.status(500).json({ error: "Something went wrong while updating the transaction." });
   }
-
-  transactions[index] = {
-    id: req.params.id,
-    name: req.body.name.trim(),
-    amount: Number(req.body.amount),
-    category: req.body.category,
-    type: req.body.type,
-    date: req.body.date
-  };
-
-  writeData(transactions);
-
-  res.status(200).json(transactions[index]);
 });
 
-app.delete("/api/transactions/:id", (req, res) => {
-  const transactions = readData();
-  const index = transactions.findIndex((t) => t.id === req.params.id);
-
-  if (index === -1) {
-    return res.status(404).json({ error: "Transaction not found." });
+app.delete("/api/transactions/:id", async (req, res) => {
+  if (!isValidId(req.params.id)) {
+    return res.status(400).json({ error: "Invalid transaction id." });
   }
 
-  const deleted = transactions.splice(index, 1)[0];
-  writeData(transactions);
-
-  res.status(200).json({ message: "Transaction deleted.", deleted: deleted });
+  try {
+    const deletedRow = await transactionModel.deleteTransaction(req.params.id);
+    if (!deletedRow) {
+      return res.status(404).json({ error: "Transaction not found." });
+    }
+    res.status(200).json({ message: "Transaction deleted.", deleted: formatRow(deletedRow) });
+  } catch (err) {
+    console.error("Error deleting transaction:", err);
+    res.status(500).json({ error: "Something went wrong while deleting the transaction." });
+  }
 });
 
-app.delete("/api/transactions", (req, res) => {
-  writeData([]);
-  res.status(200).json({ message: "All transactions deleted." });
+app.delete("/api/transactions", async (req, res) => {
+  try {
+    await transactionModel.deleteAllTransactions();
+    res.status(200).json({ message: "All transactions deleted." });
+  } catch (err) {
+    console.error("Error clearing transactions:", err);
+    res.status(500).json({ error: "Something went wrong while clearing transactions." });
+  }
 });
 
 app.use((req, res) => {

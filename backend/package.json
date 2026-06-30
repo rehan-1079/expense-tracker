@@ -1,14 +1,17 @@
 {
   "name": "expense-tracker-backend",
-  "version": "1.0.0",
-  "description": "Simple backend API for the Expense Tracker app (internship project)",
+  "version": "2.0.0",
+  "description": "Backend API for the Expense Tracker app, connected to a PostgreSQL database (internship project)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "init-db": "node initDb.js"
   },
   "dependencies": {
-    "cors": "^2.8.6",
-    "express": "^4.22.2"
+    "express": "^4.19.2",
+    "cors": "^2.8.5",
+    "pg": "^8.12.0",
+    "dotenv": "^16.4.5"
   }
 }
