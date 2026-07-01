@@ -7,9 +7,9 @@ const CATEGORIES = {
   expense: ["Food", "Transport", "Shopping", "Bills", "Entertainment", "Health", "Education", "Other"]
 };
 
-let transactions = [];  
-let editId = null;      
-let deleteId = null;     
+let transactions = [];   
+let editId = null;       
+let deleteId = null;      
 
 const transactionForm = document.getElementById("transactionForm");
 const editIdInput = document.getElementById("editId");
@@ -65,14 +65,130 @@ const toast = document.getElementById("toast");
 const menuBtn = document.getElementById("menuBtn");
 const nav = document.getElementById("nav");
 
+const apiStatus = document.getElementById("apiStatus");
+const apiStatusDot = document.getElementById("apiStatusDot");
+const apiStatusText = document.getElementById("apiStatusText");
+
+const errorBanner = document.getElementById("errorBanner");
+const retryBtn = document.getElementById("retryBtn");
+
+const apiLogList = document.getElementById("apiLogList");
+const apiLogEmpty = document.getElementById("apiLogEmpty");
+const clearLogBtn = document.getElementById("clearLogBtn");
+
+function setApiStatus(state) {
+  
+  apiStatus.className = "api-status " + state;
+
+  if (state === "connected") {
+    apiStatusText.textContent = "API Connected";
+    errorBanner.hidden = true;
+  } else if (state === "offline") {
+    apiStatusText.textContent = "API Offline";
+    errorBanner.hidden = false;
+  } else {
+    apiStatusText.textContent = "Connecting...";
+    errorBanner.hidden = true;
+  }
+}
+
+async function checkApiConnection() {
+  setApiStatus("checking");
+  try {
+    const res = await fetch("http://localhost:5000/");
+    if (res.ok) {
+      setApiStatus("connected");
+    } else {
+      setApiStatus("offline");
+    }
+  } catch (err) {
+    setApiStatus("offline");
+  }
+}
+
+function logRequest(method, endpoint) {
+  const startTime = Date.now();
+  const id = "log_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
+
+  
+  apiLogEmpty.style.display = "none";
+
+  const li = document.createElement("li");
+  li.className = "api-log-item api-log-item--" + method;
+  li.id = id;
+
+  const now = new Date();
+  const timeLabel = now.toLocaleTimeString("en-US", { hour12: false });
+
+  li.innerHTML =
+    '<span class="log-badge log-badge--' + method + '">' + method + "</span>" +
+    '<span class="log-endpoint">' + endpoint + "</span>" +
+    '<span class="log-status log-status--pending" id="status_' + id + '">...</span>' +
+    '<span class="log-duration" id="dur_' + id + '">pending</span>' +
+    '<span class="log-time">' + timeLabel + "</span>";
+
+  
+  if (apiLogList.firstChild) {
+    apiLogList.insertBefore(li, apiLogList.firstChild);
+  } else {
+    apiLogList.appendChild(li);
+  }
+
+  
+  return function done(statusCode, didError) {
+    const duration = Date.now() - startTime;
+    const statusEl = document.getElementById("status_" + id);
+    const durEl = document.getElementById("dur_" + id);
+
+    if (statusEl) {
+      statusEl.textContent = statusCode ? String(statusCode) : "ERR";
+      statusEl.className = "log-status " + (didError ? "log-status--error" : "log-status--ok");
+    }
+    if (durEl) {
+      durEl.textContent = duration + "ms";
+    }
+  };
+}
+
+function clearLog() {
+  apiLogList.innerHTML = "";
+  apiLogEmpty.style.display = "block";
+}
+
+retryBtn.addEventListener("click", async function () {
+  retryBtn.textContent = "Retrying...";
+  retryBtn.disabled = true;
+
+  await checkApiConnection();
+
+  retryBtn.textContent = "Retry Connection";
+  retryBtn.disabled = false;
+
+  
+  if (apiStatus.classList.contains("connected")) {
+    transactions = await fetchTransactions();
+    renderEverything();
+    showToast("Reconnected to server successfully.");
+  }
+});
+
+clearLogBtn.addEventListener("click", clearLog);
+
 async function fetchTransactions() {
+  const done = logRequest("GET", "/api/transactions");
   try {
     const response = await fetch(API_URL);
     if (!response.ok) {
+      done(response.status, true);
+      setApiStatus("offline");
       throw new Error("Server responded with status " + response.status);
     }
+    done(response.status, false);
+    setApiStatus("connected");
     return await response.json();
   } catch (err) {
+    done(null, true);
+    setApiStatus("offline");
     console.error("Could not load transactions from server:", err);
     showToast("Could not connect to server. Is the backend running?", true);
     return [];
@@ -80,6 +196,7 @@ async function fetchTransactions() {
 }
 
 async function createTransactionOnServer(data) {
+  const done = logRequest("POST", "/api/transactions");
   try {
     const response = await fetch(API_URL, {
       method: "POST",
@@ -90,13 +207,19 @@ async function createTransactionOnServer(data) {
     const result = await response.json();
 
     if (!response.ok) {
+      done(response.status, true);
+      setApiStatus("connected"); 
       const message = result.errors ? result.errors.join(" ") : "Could not add transaction.";
       showToast(message, true);
       return null;
     }
 
+    done(response.status, false);
+    setApiStatus("connected");
     return result;
   } catch (err) {
+    done(null, true);
+    setApiStatus("offline");
     console.error("Could not add transaction:", err);
     showToast("Could not connect to server. Is the backend running?", true);
     return null;
@@ -104,6 +227,7 @@ async function createTransactionOnServer(data) {
 }
 
 async function updateTransactionOnServer(id, data) {
+  const done = logRequest("PUT", "/api/transactions/" + id);
   try {
     const response = await fetch(API_URL + "/" + id, {
       method: "PUT",
@@ -114,13 +238,19 @@ async function updateTransactionOnServer(id, data) {
     const result = await response.json();
 
     if (!response.ok) {
+      done(response.status, true);
+      setApiStatus("connected");
       const message = result.errors ? result.errors.join(" ") : "Could not update transaction.";
       showToast(message, true);
       return null;
     }
 
+    done(response.status, false);
+    setApiStatus("connected");
     return result;
   } catch (err) {
+    done(null, true);
+    setApiStatus("offline");
     console.error("Could not update transaction:", err);
     showToast("Could not connect to server. Is the backend running?", true);
     return null;
@@ -128,14 +258,21 @@ async function updateTransactionOnServer(id, data) {
 }
 
 async function deleteTransactionOnServer(id) {
+  const done = logRequest("DELETE", "/api/transactions/" + id);
   try {
     const response = await fetch(API_URL + "/" + id, { method: "DELETE" });
     if (!response.ok) {
+      done(response.status, true);
+      setApiStatus("connected");
       showToast("Could not delete transaction.", true);
       return false;
     }
+    done(response.status, false);
+    setApiStatus("connected");
     return true;
   } catch (err) {
+    done(null, true);
+    setApiStatus("offline");
     console.error("Could not delete transaction:", err);
     showToast("Could not connect to server. Is the backend running?", true);
     return false;
@@ -143,14 +280,21 @@ async function deleteTransactionOnServer(id) {
 }
 
 async function clearAllTransactionsOnServer() {
+  const done = logRequest("DELETE", "/api/transactions (all)");
   try {
     const response = await fetch(API_URL, { method: "DELETE" });
     if (!response.ok) {
+      done(response.status, true);
+      setApiStatus("connected");
       showToast("Could not clear transactions.", true);
       return false;
     }
+    done(response.status, false);
+    setApiStatus("connected");
     return true;
   } catch (err) {
+    done(null, true);
+    setApiStatus("offline");
     console.error("Could not clear transactions:", err);
     showToast("Could not connect to server. Is the backend running?", true);
     return false;
@@ -181,6 +325,7 @@ function showToast(message, isError) {
   toast.textContent = message;
   toast.className = "toast show" + (isError ? " error" : "");
 
+  
   setTimeout(function () {
     toast.className = "toast";
   }, 2500);
@@ -189,6 +334,7 @@ function showToast(message, isError) {
 function validateForm() {
   let isValid = true;
 
+  
   if (nameInput.value.trim() === "") {
     nameError.textContent = "Please enter a transaction name.";
     nameInput.classList.add("invalid");
@@ -198,6 +344,7 @@ function validateForm() {
     nameInput.classList.remove("invalid");
   }
 
+  
   const amount = Number(amountInput.value);
   if (amountInput.value === "" || isNaN(amount)) {
     amountError.textContent = "Please enter an amount.";
@@ -212,6 +359,7 @@ function validateForm() {
     amountInput.classList.remove("invalid");
   }
 
+  
   if (dateInput.value === "") {
     dateError.textContent = "Please select a date.";
     dateInput.classList.add("invalid");
@@ -221,6 +369,7 @@ function validateForm() {
     dateInput.classList.remove("invalid");
   }
 
+  
   if (categorySelect.value === "") {
     categoryError.textContent = "Please select a category.";
     categorySelect.classList.add("invalid");
@@ -302,6 +451,7 @@ function getVisibleTransactions() {
   const categoryValue = filterCategory.value;
   const sortValue = sortOrder.value;
 
+  
   let result = transactions.filter(function (t) {
     const matchesSearch =
       t.name.toLowerCase().includes(searchText) ||
@@ -311,6 +461,7 @@ function getVisibleTransactions() {
     return matchesSearch && matchesType && matchesCategory;
   });
 
+  
   if (sortValue === "newest") {
     result.sort(function (a, b) {
       return new Date(b.date) - new Date(a.date);
@@ -342,6 +493,7 @@ function renderSummary() {
   incomeValue.textContent = formatMoney(totalIncome);
   expenseValue.textContent = formatMoney(totalExpense);
 
+  
   const balanceCard = balanceValue.closest(".card");
   if (balance < 0) {
     balanceCard.classList.add("negative");
@@ -384,6 +536,7 @@ function renderTransactionList() {
   if (visible.length === 0) {
     transactionList.innerHTML = "";
     emptyMsg.style.display = "block";
+    
     if (transactions.length === 0) {
       emptyMsg.textContent = "No transactions yet. Add one above to get started.";
     } else {
@@ -438,6 +591,7 @@ function renderExpenseBreakdown() {
     return;
   }
 
+  
   const totalsByCategory = {};
   let grandTotal = 0;
 
@@ -447,6 +601,7 @@ function renderExpenseBreakdown() {
     grandTotal += t.amount;
   }
 
+  
   const categories = Object.keys(totalsByCategory).sort(function (a, b) {
     return totalsByCategory[b] - totalsByCategory[a];
   });
@@ -489,6 +644,7 @@ function exportToCSV() {
 
   for (let i = 0; i < transactions.length; i++) {
     const t = transactions[i];
+    
     csv += '"' + t.name.replace(/"/g, '""') + '",' + t.amount + "," + t.category + "," + t.type + "," + t.date + "\n";
   }
 
@@ -506,7 +662,7 @@ function exportToCSV() {
   showToast("CSV file downloaded.");
 }
 
-function startEdit(id) {
+function startEdit(id) {  
   const transaction = transactions.find(function (t) {
     return t.id == id;
   });
@@ -530,6 +686,7 @@ function startEdit(id) {
   submitBtn.textContent = "Save Changes";
   cancelEditBtn.style.display = "inline-block";
 
+  
   document.getElementById("add-transaction").scrollIntoView({ behavior: "smooth" });
 }
 
@@ -544,6 +701,7 @@ function cancelEdit() {
   submitBtn.textContent = "Add Transaction";
   cancelEditBtn.style.display = "none";
 
+  
   nameError.textContent = "";
   amountError.textContent = "";
   dateError.textContent = "";
@@ -577,6 +735,8 @@ transactionForm.addEventListener("submit", async function (e) {
     category: categorySelect.value
   };
 
+  
+  
   submitBtn.disabled = true;
 
   if (editId) {
@@ -606,6 +766,8 @@ transactionList.addEventListener("click", function (e) {
 
   if (e.target.classList.contains("delete-btn")) {
     deleteId = id;
+    
+    
     const transaction = transactions.find(function (t) { return t.id == id; });
     deleteModalText.textContent = transaction
       ? 'Delete "' + transaction.name + '"? This cannot be undone.'
@@ -655,6 +817,10 @@ async function init() {
   updateFilterCategoryOptions();
   dateInput.value = getTodayDate();
 
+  
+  await checkApiConnection();
+
+  
   emptyMsg.style.display = "block";
   emptyMsg.textContent = "Loading transactions...";
 

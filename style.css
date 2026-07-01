@@ -548,6 +548,219 @@ main section {
   background: #962318;
 }
 
+.api-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: #f4f6f9;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  padding: 5px 12px;
+  white-space: nowrap;
+}
+
+.api-status__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #aaa;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.api-status.connected .api-status__dot {
+  background: #2f6f4e;
+  box-shadow: 0 0 0 3px rgba(47, 111, 78, 0.2);
+  animation: pulse-green 2s infinite;
+}
+.api-status.connected .api-status__text { color: #2f6f4e; }
+
+.api-status.offline .api-status__dot {
+  background: #c0392b;
+  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.2);
+}
+.api-status.offline .api-status__text { color: #c0392b; }
+
+.api-status.checking .api-status__dot {
+  background: #b8860b;
+  animation: pulse-yellow 1s infinite;
+}
+.api-status.checking .api-status__text { color: #b8860b; }
+
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(47, 111, 78, 0.4); }
+  50% { box-shadow: 0 0 0 5px rgba(47, 111, 78, 0); }
+}
+@keyframes pulse-yellow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.error-banner {
+  background: #fbeae8;
+  border-bottom: 2px solid #c0392b;
+  color: #962318;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  flex-wrap: wrap;
+}
+
+.error-banner[hidden] {
+  display: none;
+}
+
+.error-banner__retry {
+  background: #c0392b;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.error-banner__retry:hover {
+  background: #962318;
+}
+
+.api-log-panel {
+  margin-top: 5px;
+}
+
+.api-log-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.api-log-header h2 {
+  font-size: 1.2rem;
+  margin-bottom: 3px;
+  color: #2c4275;
+}
+
+.api-log-subtitle {
+  color: #777;
+  font-size: 0.85rem;
+}
+
+.btn-small {
+  padding: 6px 12px;
+  font-size: 0.82rem;
+}
+
+.api-log-legend {
+  font-size: 0.82rem;
+  color: #555;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.api-log-empty {
+  text-align: center;
+  color: #aaa;
+  padding: 25px 10px;
+  font-size: 0.88rem;
+  border: 1px dashed #ddd;
+  border-radius: 6px;
+}
+
+.api-log-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.api-log-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  animation: slideInLog 0.25s ease;
+  flex-wrap: wrap;
+}
+
+@keyframes slideInLog {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.api-log-item--GET    { border-left: 4px solid #3d5a99; }
+.api-log-item--POST   { border-left: 4px solid #2f6f4e; }
+.api-log-item--PUT    { border-left: 4px solid #b8860b; }
+.api-log-item--DELETE { border-left: 4px solid #c0392b; }
+
+.log-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
+.log-badge--GET    { background: #e8edf8; color: #2c4275; }
+.log-badge--POST   { background: #e5f2ea; color: #1f5138; }
+.log-badge--PUT    { background: #fef9e7; color: #7d5a00; }
+.log-badge--DELETE { background: #fbeae8; color: #962318; }
+
+.log-status {
+  font-weight: bold;
+  font-size: 0.82rem;
+  flex-shrink: 0;
+}
+.log-status--ok      { color: #2f6f4e; }
+.log-status--error   { color: #c0392b; }
+.log-status--pending { color: #b8860b; }
+
+.log-endpoint {
+  color: #444;
+  font-family: monospace;
+  font-size: 0.82rem;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.log-time {
+  color: #aaa;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.log-duration {
+  color: #888;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
 .footer {
   text-align: center;
   padding: 20px;

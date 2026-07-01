@@ -19,7 +19,17 @@
         <a href="#statistics">Statistics</a>
       </nav>
 
-      <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+      <div class="api-status" id="apiStatus">
+        <span class="api-status__dot" id="apiStatusDot"></span>
+        <span class="api-status__text" id="apiStatusText">Connecting...</span>
+      </div>
+
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu">&#9776;</button>
+    </div>
+    
+    <div class="error-banner" id="errorBanner" hidden>
+      <span>Cannot reach the backend server at localhost:5000. Make sure it is running.</span>
+      <button class="error-banner__retry" id="retryBtn">Retry Connection</button>
     </div>
   </header>
 
@@ -44,7 +54,7 @@
       </section>
 
       <div class="main-grid">
-
+        
         <section class="panel" id="add-transaction">
           <h2>Add Transaction</h2>
 
@@ -86,6 +96,7 @@
             <div class="form-group">
               <label for="transCategory">Category</label>
               <select id="transCategory">
+                
               </select>
               <span class="error-msg" id="categoryError"></span>
             </div>
@@ -96,7 +107,7 @@
             </div>
           </form>
         </section>
-
+        
         <section class="panel" id="history">
           <div class="panel-header">
             <h2>Transaction History</h2>
@@ -127,7 +138,7 @@
           <ul class="transaction-list" id="transactionList"></ul>
         </section>
       </div>
-
+      
       <section class="panel" id="statistics">
         <h2>Statistics</h2>
 
@@ -149,7 +160,7 @@
             <p class="stat-label">Monthly Savings</p>
           </div>
         </div>
-
+        
         <div class="breakdown">
           <h3>Expense Breakdown by Category</h3>
           <div id="expenseBreakdown" class="breakdown-list">
@@ -164,13 +175,40 @@
         <button class="btn btn-secondary" id="exportBtn">Export to CSV</button>
       </section>
 
-    </div>
+    </div>      
+      
+      <section class="panel api-log-panel">
+        <div class="api-log-header">
+          <div>
+            <h2>API Request Log</h2>
+            <p class="api-log-subtitle">Live record of every request sent from this page to the backend.</p>
+          </div>
+          <button class="btn btn-secondary btn-small" id="clearLogBtn">Clear Log</button>
+        </div>
+
+        <div class="api-log-legend">
+          <span class="log-badge log-badge--GET">GET</span> Fetch data
+          &nbsp;&nbsp;
+          <span class="log-badge log-badge--POST">POST</span> Create
+          &nbsp;&nbsp;
+          <span class="log-badge log-badge--PUT">PUT</span> Update
+          &nbsp;&nbsp;
+          <span class="log-badge log-badge--DELETE">DELETE</span> Delete
+        </div>
+
+        <div class="api-log-empty" id="apiLogEmpty">
+          No requests yet. Add, edit or delete a transaction to see requests appear here.
+        </div>
+
+        <ul class="api-log-list" id="apiLogList"></ul>
+      </section>
+
   </main>
 
   <footer class="footer">
-    <p>Expense Tracker — Data is saved in your browser only.</p>
+    <p>Expense Tracker </p>
   </footer>
-
+  
   <div class="modal-overlay" id="deleteModal" hidden>
     <div class="modal">
       <h3>Delete this transaction?</h3>
@@ -192,7 +230,7 @@
       </div>
     </div>
   </div>
-
+  
   <div class="toast" id="toast"></div>
 
   <script src="script.js"></script>
